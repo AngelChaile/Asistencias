@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registro de Asistencias</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #2b5876, #4e4376);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .loader {
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top: 4px solid #fff;
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      animation: spin 1s linear infinite;
+      margin-top: 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    h1 {
+      font-weight: 600;
+      font-size: 1.5rem;
+      margin: 0;
+    }
+
+    p {
+      opacity: 0.85;
+      font-size: 1rem;
+      margin-top: 10px;
+    }
+
+    .error {
+      color: #ffbaba;
+      background: rgba(255, 0, 0, 0.15);
+      padding: 12px 18px;
+      border-radius: 10px;
+      margin-top: 20px;
+      display: none;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <h1>Verificando acceso...</h1>
+    <p>Por favor, espera unos segundos mientras redirigimos tu fichada.</p>
+    <div class="loader"></div>
+    <div class="error" id="errorMsg">
+      ⚠️ No se pudo conectar con el sistema de asistencia.<br>
+      Verifica tu conexión o consulta con Recursos Humanos.
+    </div>
+  </div>
+
+  <script>
+    window.onload = () => {
+      const params = new URLSearchParams(window.location.search);
+      const place = params.get("place");
+      const token = params.get("token");
+
+      if (!place || !token) {
+        document.getElementById("errorMsg").style.display = "block";
+        document.querySelector(".loader").style.display = "none";
+        document.querySelector("h1").innerText = "Error de acceso";
+        document.querySelector("p").innerText = "Parámetros de QR inválidos.";
+        return;
+      }
+
+      // Redirigir a tu Apps Script real
+      const redirectURL = `https://script.google.com/macros/s/AKfycbwHdqhCRf-zQVSa_FOxCr1pVZ23BKPwlKwd8QNy2wd6CdYBk6bhju4mQEYADP5tfrDj/exec?place=${encodeURIComponent(place)}&token=${encodeURIComponent(token)}`;
+
+      // Redirige con un pequeño retardo (1.5 segundos)
+      setTimeout(() => {
+        window.location.href = redirectURL;
+      }, 1500);
+
+      // Si en 8 segundos no se logra redirigir, muestra error
+      setTimeout(() => {
+        if (!document.hidden) {
+          document.getElementById("errorMsg").style.display = "block";
+          document.querySelector(".loader").style.display = "none";
+          document.querySelector("h1").innerText = "Error al conectar";
+          document.querySelector("p").innerText = "Intenta escanear nuevamente el QR.";
+        }
+      }, 8000);
+    };
+  </script>
+</body>
+</html>
