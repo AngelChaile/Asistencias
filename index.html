@@ -1,175 +1,37 @@
+```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Registro de Asistencias</title>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <style>
-    body {
-      margin: 0;
-      font-family: "Poppins", sans-serif;
-      background: linear-gradient(135deg, #2b5876, #4e4376);
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      text-align: center;
-      flex-direction: column;
-    }
-
-    h1 { font-weight: 600; margin: 0; }
-
-    button {
-      background: #00aaff;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      font-size: 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      margin-top: 20px;
-      transition: all 0.3s ease;
-    }
-
-    button:hover { background: #0088cc; }
-    button:disabled { background: #555; cursor: not-allowed; }
-
-    .loader {
-      border: 4px solid rgba(255,255,255,0.3);
-      border-top: 4px solid #fff;
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      animation: spin 1s linear infinite;
-      margin-top: 30px;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .hidden { display: none; }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="main">
-    <h1>Registro de Asistencia</h1>
-    <p id="msg">Verificando acceso...</p>
-    <div class="loader" id="loader"></div>
+  <div class="container">
+    <h1>Registro de Asistencias</h1>
+
+    <!-- Sección de bienvenida -->
+    <div id="main-content">
+      <p>Bienvenido al sistema de fichadas.</p>
+      <button id="btnGenerarQR">Generar nuevo QR</button>
+
+      <div id="qrContainer" class="hidden">
+        <p>Escaneá este código para fichar:</p>
+        <img id="qrImage" alt="QR Code" />
+        <button id="btnNuevoQR">🔄 Generar otro QR</button>
+      </div>
+    </div>
+
+    <!-- Sección de verificación (cuando se entra con ?token=...) -->
+    <div id="verify-content" class="hidden">
+      <h2>Verificando acceso...</h2>
+      <div class="spinner"></div>
+      <p id="verify-message"></p>
+    </div>
   </div>
 
-  <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw1dAqjTDoycBSivYo7rXQm6XWTGA_7qJQtWlNRkoGbPdEicsLKHt4xYAvVfG4VGddd/exec";
-
-    window.onload = async () => {
-      const params = new URLSearchParams(window.location.search);
-      const token = params.get("token");
-
-      if (!token) {
-        showError("Parámetros inválidos", "El QR escaneado no contiene datos válidos.");
-        return;
-      }
-
-      showLoading("Verificando acceso...");
-
-      try {
-        const res = await fetch(`${SCRIPT_URL}?token=${encodeURIComponent(token)}`);
-        const data = await res.json();
-
-        Swal.close();
-
-        if (data.status === "ok") {
-          Swal.fire({
-            icon: "success",
-            title: "✅ Fichada registrada",
-            text: `${data.msg}`,
-            confirmButtonText: "Listo"
-          });
-        } else if (data.status === "new_user") {
-          askForRegistration();
-        } else {
-          showError("Error", data.msg || "No se pudo registrar la asistencia.");
-        }
-
-      } catch (err) {
-        Swal.close();
-        showError("Error de conexión", "No se pudo conectar con el sistema de asistencia.");
-        console.error(err);
-      }
-    };
-
-    // Mostrar formulario de registro
-    function askForRegistration() {
-      Swal.fire({
-        title: "Nuevo empleado",
-        html: `
-          <input id="legajo" class="swal2-input" placeholder="Legajo">
-          <input id="nombre" class="swal2-input" placeholder="Nombre">
-          <input id="apellido" class="swal2-input" placeholder="Apellido">
-          <input id="secretaria" class="swal2-input" placeholder="Secretaría">
-          <input id="lugar" class="swal2-input" placeholder="Lugar de trabajo">
-        `,
-        confirmButtonText: "Registrar",
-        showCancelButton: true,
-        cancelButtonText: "Cancelar",
-        preConfirm: async () => {
-          const emp = {
-            legajo: document.getElementById("legajo").value.trim(),
-            nombre: document.getElementById("nombre").value.trim(),
-            apellido: document.getElementById("apellido").value.trim(),
-            secretaria: document.getElementById("secretaria").value.trim(),
-            lugar: document.getElementById("lugar").value.trim(),
-          };
-
-          if (Object.values(emp).some(v => !v)) {
-            Swal.showValidationMessage("Por favor, completa todos los campos.");
-            return false;
-          }
-
-          showLoading("Registrando empleado...");
-
-          try {
-            const res = await fetch(`${SCRIPT_URL}?action=register`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(emp)
-            });
-            const data = await res.json();
-            Swal.close();
-
-            if (data.status === "ok") {
-              Swal.fire("✅ Registrado", "El empleado fue registrado correctamente.", "success");
-            } else {
-              showError("Error", data.msg || "No se pudo registrar el empleado.");
-            }
-          } catch (err) {
-            Swal.close();
-            showError("Error de conexión", "No se pudo conectar con el servidor.");
-            console.error(err);
-          }
-        }
-      });
-    }
-
-    function showLoading(title) {
-      Swal.fire({
-        title,
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading()
-      });
-    }
-
-    function showError(title, msg) {
-      Swal.fire({
-        icon: "error",
-        title,
-        text: msg,
-        confirmButtonText: "Entendido"
-      });
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
+```
