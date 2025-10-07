@@ -1,6 +1,6 @@
 
 // === CONFIGURACIÓN ===
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz9OBtzQPnr6IH9Au7suk_dgq4BbpMS_0kqKfcyKNPKe4ZFLr1YvAvX8iUvlwTJNgmV/exec"; // <-- tu URL actual del Apps Script
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxyX3jSogzTKMnEi6F6beUG-Ltr7hoFuiAJulhcAmXRY5E4lOwyzWWMUDFp15hKohE/exec"; // <-- tu URL actual del Apps Script
 
 // === ELEMENTOS DEL DOM ===
 const btnGenerarQR = document.getElementById("btnGenerarQR");
