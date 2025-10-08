@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verificar Empleado - Sistema de Asistencias</title>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      max-width: 500px;
+      width: 100%;
+    }
+    h1 {
+      color: #333;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #555;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .btn {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      width: 100%;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+    .btn:hover {
+      background: #5a6fd8;
+    }
+    .btn-secondary {
+      background: #6c757d;
+    }
+    .btn-secondary:hover {
+      background: #5a6268;
+    }
+    .hidden {
+      display: none;
+    }
+    .empleado-info {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Registro de Asistencia</h1>
+    
+    <!-- Formulario para buscar empleado existente -->
+    <div id="buscar-empleado">
+      <div class="form-group">
+        <label for="documento">Número de Documento:</label>
+        <input type="text" id="documento" placeholder="Ingresá tu DNI" required>
+      </div>
+      <button class="btn" onclick="buscarEmpleado()">Buscar Empleado</button>
+      <p style="text-align: center; margin-top: 15px;">
+        <a href="#" onclick="mostrarRegistro()">¿Sos empleado nuevo? Registrate aquí</a>
+      </p>
+    </div>
+
+    <!-- Información del empleado encontrado -->
+    <div id="empleado-encontrado" class="hidden">
+      <div class="empleado-info">
+        <h3>Empleado encontrado</h3>
+        <p><strong>Nombre:</strong> <span id="emp-nombre"></span></p>
+        <p><strong>Legajo:</strong> <span id="emp-legajo"></span></p>
+        <p><strong>Área:</strong> <span id="emp-secretaria"></span></p>
+      </div>
+      <button class="btn" onclick="registrarAsistencia()">Registrar Mi Asistencia</button>
+      <button class="btn btn-secondary" onclick="volverABuscar()">Buscar otro empleado</button>
+    </div>
+
+    <!-- Formulario para nuevo empleado -->
+    <div id="registro-empleado" class="hidden">
+      <h3>Registro de Nuevo Empleado</h3>
+      <div class="form-group">
+        <label for="nuevo-documento">Documento:</label>
+        <input type="text" id="nuevo-documento" required>
+      </div>
+      <div class="form-group">
+        <label for="nuevo-nombre">Nombre:</label>
+        <input type="text" id="nuevo-nombre" required>
+      </div>
+      <div class="form-group">
+        <label for="nuevo-apellido">Apellido:</label>
+        <input type="text" id="nuevo-apellido" required>
+      </div>
+      <div class="form-group">
+        <label for="nuevo-secretaria">Secretaría/Área:</label>
+        <select id="nuevo-secretaria">
+          <option value="RRHH">RRHH</option>
+          <option value="Administración">Administración</option>
+          <option value="Sistemas">Sistemas</option>
+          <option value="Contabilidad">Contabilidad</option>
+          <option value="Ventas">Ventas</option>
+        </select>
+      </div>
+      <button class="btn" onclick="registrarNuevoEmpleado()">Registrar y Fichar</button>
+      <button class="btn btn-secondary" onclick="volverABuscar()">Volver</button>
+    </div>
+  </div>
+
+  <script>
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyAKV0eCtJOHVBiaMtjx_sYjjHZYa9-nNIO2sDqrkf744ad4zDYTnyhQZmCEvgpgiXu/exec";
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const place = urlParams.get('place');
+
+    let empleadoActual = null;
+
+    async function buscarEmpleado() {
+      const documento = document.getElementById('documento').value.trim();
+      
+      if (!documento) {
+        Swal.fire('Error', 'Por favor ingresá tu documento', 'error');
+        return;
+      }
+
+      Swal.fire({
+        title: 'Buscando empleado...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
+
+      try {
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'buscarEmpleado',
+            documento: documento
+          })
+        });
+        
+        const data = await response.json();
+
+        Swal.close();
+
+        if (data.status === 'ok' && data.empleado) {
+          empleadoActual = data.empleado;
+          mostrarEmpleadoEncontrado(data.empleado);
+        } else {
+          Swal.fire({
+            title: 'Empleado no encontrado',
+            text: '¿Queres registrarte como nuevo empleado?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, registrarme',
+            cancelButtonText: 'No, intentar de nuevo'
+          }).then((result) => {
+            if (result.isConfirmed) {
+              document.getElementById('nuevo-documento').value = documento;
+              mostrarRegistro();
+            }
+          });
+        }
+      } catch (error) {
+        Swal.fire('Error', 'Error de conexión', 'error');
+      }
+    }
+
+    function mostrarEmpleadoEncontrado(empleado) {
+      document.getElementById('emp-nombre').textContent = `${empleado.nombre} ${empleado.apellido}`;
+      document.getElementById('emp-legajo').textContent = empleado.legajo;
+      document.getElementById('emp-secretaria').textContent = empleado.secretaria;
+      
+      document.getElementById('buscar-empleado').classList.add('hidden');
+      document.getElementById('empleado-encontrado').classList.remove('hidden');
+    }
+
+    function mostrarRegistro() {
+      document.getElementById('buscar-empleado').classList.add('hidden');
+      document.getElementById('registro-empleado').classList.remove('hidden');
+    }
+
+    function volverABuscar() {
+      document.getElementById('buscar-empleado').classList.remove('hidden');
+      document.getElementById('empleado-encontrado').classList.add('hidden');
+      document.getElementById('registro-empleado').classList.add('hidden');
+      document.getElementById('documento').value = '';
+      empleadoActual = null;
+    }
+
+    async function registrarNuevoEmpleado() {
+      const empleado = {
+        documento: document.getElementById('nuevo-documento').value,
+        nombre: document.getElementById('nuevo-nombre').value,
+        apellido: document.getElementById('nuevo-apellido').value,
+        secretaria: document.getElementById('nuevo-secretaria').value
+      };
+
+      if (!empleado.documento || !empleado.nombre || !empleado.apellido) {
+        Swal.fire('Error', 'Completá todos los campos obligatorios', 'error');
+        return;
+      }
+
+      Swal.fire({
+        title: 'Registrando empleado...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
+
+      try {
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'registrarEmpleado',
+            empleado: empleado
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.status === 'ok') {
+          empleadoActual = { ...empleado, legajo: data.legajo };
+          await registrarAsistencia();
+        } else {
+          Swal.fire('Error', data.msg, 'error');
+        }
+      } catch (error) {
+        Swal.fire('Error', 'Error de conexión', 'error');
+      }
+    }
+
+    async function registrarAsistencia() {
+      if (!empleadoActual) {
+        Swal.fire('Error', 'No se encontró información del empleado', 'error');
+        return;
+      }
+
+      Swal.fire({
+        title: 'Registrando asistencia...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
+
+      try {
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'registrarAsistencia',
+            legajo: empleadoActual.legajo
+          })
+        });
+
+        const data = await response.json();
+        Swal.close();
+
+        if (data.status === 'ok') {
+          Swal.fire({
+            title: '✅ Asistencia registrada',
+            html: `
+              <p><strong>${data.empleado.nombre} ${data.empleado.apellido}</strong></p>
+              <p>Legajo: ${data.empleado.legajo}</p>
+              <p>Tipo: ${data.tipo}</p>
+              <p>Hora: ${data.hora}</p>
+            `,
+            icon: 'success',
+            confirmButtonText: 'Aceptar'
+          }).then(() => {
+            window.location.href = 'https://angelchaile.github.io/Asistencias/';
+          });
+        } else {
+          Swal.fire('Atención', data.msg, 'warning');
+        }
+      } catch (error) {
+        Swal.fire('Error', 'Error registrando asistencia', 'error');
+      }
+    }
+
+    // Enter key support
+    document.getElementById('documento').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') buscarEmpleado();
+    });
+  </script>
+</body>
+</html>

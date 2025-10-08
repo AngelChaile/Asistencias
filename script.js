@@ -15,13 +15,13 @@ async function fetchGoogleScript(url) {
   try {
     // Usar fetch normal sin proxy
     const response = await fetch(url);
-    
+
     if (!response.ok) {
       throw new Error(`Error HTTP: ${response.status}`);
     }
-    
+
     const text = await response.text();
-    
+
     // Intentar parsear como JSON
     try {
       return JSON.parse(text);
@@ -52,17 +52,16 @@ window.addEventListener("load", async () => {
     try {
       const targetUrl = `${GOOGLE_SCRIPT_URL}?token=${encodeURIComponent(token)}&place=${encodeURIComponent(place)}`;
       const data = await fetchGoogleScript(targetUrl);
-      
+
       if (data.status === "ok") {
         verifyMessage.innerHTML = `✅ ${data.msg}<br>Redirigiendo para fichar...`;
         verifyMessage.style.color = "green";
-        
-        // Redirigir directamente al Apps Script para registrar asistencia
+
+        // Redirigir a la página de verificación de empleado
         setTimeout(() => {
-          const asistenciaUrl = `${GOOGLE_SCRIPT_URL}?registrar=true&token=${token}&place=${place}`;
-          window.location.href = asistenciaUrl;
+          window.location.href = data.redirectUrl || `${GOOGLE_SCRIPT_URL}?scan=true&token=${token}&place=${place}`;
         }, 2000);
-        
+
       } else {
         verifyMessage.innerHTML = `⚠️ ${data.msg}`;
         verifyMessage.style.color = "red";
@@ -71,7 +70,7 @@ window.addEventListener("load", async () => {
       console.error("Error:", err);
       verifyMessage.innerHTML = "❌ Error de conexión. Redirigiendo directamente al sistema...";
       verifyMessage.style.color = "red";
-      
+
       // Fallback: redirigir directamente al Apps Script
       setTimeout(() => {
         window.location.href = `${GOOGLE_SCRIPT_URL}?scan=true&token=${token}&place=${place}`;
@@ -97,11 +96,11 @@ async function generarQR() {
   alerta.textContent = "⏳ Generando QR...";
   alerta.style.color = "#007bff";
   alerta.id = "qr-alerta";
-  
+
   // Remover alerta anterior si existe
   const existingAlert = document.getElementById("qr-alerta");
   if (existingAlert) existingAlert.remove();
-  
+
   mainContent.appendChild(alerta);
 
   try {
@@ -112,9 +111,9 @@ async function generarQR() {
       qrImage.src = data.qrUrl;
       qrContainer.classList.remove("hidden");
       alerta.remove();
-      
+
       console.log("QR generado exitosamente:", data);
-      
+
       // Mostrar enlace como alternativa
       if (data.qrLink) {
         const linkInfo = document.createElement('p');
@@ -128,7 +127,7 @@ async function generarQR() {
     console.error("Error generando QR:", error);
     alerta.textContent = `⚠️ ${error.message}`;
     alerta.style.color = "red";
-    
+
     // Mostrar enlace directo como fallback
     const directLink = document.createElement('a');
     directLink.href = GOOGLE_SCRIPT_URL;
@@ -148,16 +147,16 @@ async function generarQR() {
 function showMessage(message, type = "info") {
   const colors = {
     info: "#007bff",
-    success: "green", 
+    success: "green",
     error: "red",
     warning: "orange"
   };
-  
+
   verifyMessage.innerHTML = message;
   verifyMessage.style.color = colors[type] || colors.info;
 }
 
 // Inicialización
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   console.log('Sistema de asistencias cargado');
 });
