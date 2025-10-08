@@ -1,5 +1,5 @@
 // === CONFIGURACIÓN ===
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzJdTebUilvWFOEFegGTmyX6Dr-v3nSzZqQyPXL8Ne52r2280NldpVXhZhSOfAcfl-y/exec";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw1VzM-YL42CVElOIitH2UIogFCtDELw65ZE0lS_l9qNLDEdZu4TeZNHM0OL344Z-Ox/exec";
 
 // === ELEMENTOS DEL DOM ===
 const btnGenerarQR = document.getElementById("btnGenerarQR");
